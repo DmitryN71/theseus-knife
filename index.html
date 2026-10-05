@@ -595,7 +595,8 @@ footer{
 
     <div class="modes" role="group" aria-label="Режим сложности">
       <span>Режим:</span>
-      <button type="button" data-mode="normal">Обычный</button>
+      <button type="button" data-mode="easy">Обычный</button>
+      <button type="button" data-mode="hard">Сложный</button>
       <button type="button" data-mode="ultra">Ultra</button>
       <small id="a2ModeNote"></small>
     </div>
@@ -676,10 +677,10 @@ footer{
       <summary>Регламент попытки</summary>
       <ol>
         <li>Нажатие на палец разжимает его. Чтобы выпустить телефон, нужно разжать все пять.</li>
-        <li>Каждое новое уведомление вибрацией сжимает один разжатый палец.</li>
-        <li>Разжатый палец через <span id="a2RuleRelax">6 секунд</span> сжимается сам: мышечная память.</li>
+        <li id="a2RuleVibe"></li>
+        <li id="a2RuleRelax"></li>
         <li>Непрочитанные уведомления повышают тягу экрана. Когда уведомлений нет, тяга падает.</li>
-        <li>Большой палец разжимается, только когда на экране нет уведомлений и тяга ниже <span id="a2RuleThumb">50</span> % (метка на шкале тяги). Он листает. Подпись на пальце показывает, чем он занят.</li>
+        <li id="a2RuleThumb"></li>
         <li>Уведомление смахивается крестиком. Нажатие на текст уведомления его открывает. Не открывайте.</li>
         <li>При тяге 100 % хватка становится окончательной.</li>
         <li>Выпущенный телефон лежит экраном вниз и продолжает получать уведомления. Если тяга дойдёт до 100 %, он вернётся в руку сам.</li>
@@ -1142,12 +1143,18 @@ footer{
 
   /* ================= АКТ II ================= */
   var FING = [["Большой","Большой"],["Указат.","Указательный"],["Средний","Средний"],["Безым.","Безымянный"],["Мизинец","Мизинец"]];
+  /* vibe – вибрация сжимает разжатый палец; relax – через сколько мс палец сжимается сам (0 – никогда);
+     thumbMax – порог тяги для большого пальца (больше 100 – порога нет) */
   var MODES = {
-    normal:{start:30, thumbMax:50, grow:3, decay:7, freeGrow:3, relax:6000, gap:[2200, 3600], first:2500, minSpeed:0.6, ramp:60000, back:45},
-    ultra:{start:60, thumbMax:30, grow:6, decay:9, freeGrow:5, relax:4000, gap:[1300, 2400], first:1600, minSpeed:0.55, ramp:45000, back:60}
+    easy:{vibe:false, start:20, thumbMax:101, grow:2, decay:8, freeGrow:2, relax:0, gap:[3000, 5000], first:3000, minSpeed:0.7, ramp:90000, back:30},
+    hard:{vibe:true, start:30, thumbMax:50, grow:3, decay:7, freeGrow:3, relax:6000, gap:[2200, 3600], first:2500, minSpeed:0.6, ramp:60000, back:45},
+    ultra:{vibe:true, start:60, thumbMax:30, grow:6, decay:9, freeGrow:5, relax:4000, gap:[1300, 2400], first:1600, minSpeed:0.55, ramp:45000, back:60}
   };
-  var SLICES = 3, mode = "normal";
-  try { if (localStorage.getItem("theseus-knife-mode") === "ultra") mode = "ultra"; } catch (e) {}
+  var SLICES = 3, mode = "easy";
+  try {
+    var savedMode = localStorage.getItem("theseus-knife-level");
+    if (MODES[savedMode]) mode = savedMode;
+  } catch (e) {}
   function M(){ return MODES[mode]; }
 
   var NOTIFS = [
@@ -1267,7 +1274,7 @@ footer{
     var t = NOTIFS[S2.deck[S2.di % S2.deck.length]];
     S2.di++;
     S2.notifs.push({id:++S2.nid, app:t[0], text:t[1]});
-    if (S2.phase === "grip"){
+    if (S2.phase === "grip" && M().vibe){
       var i = clenchRandom();
       if (i !== null) note2("Вибрация. Палец «" + FING[i][1] + "» сжался рефлекторно.", true);
     }
@@ -1291,7 +1298,7 @@ footer{
     if (S2.phase !== "grip") return;
     S2.notifs = S2.notifs.filter(function(n){return n.id !== id;});
     S2.pull = Math.min(100, S2.pull + 25);
-    clenchRandom();
+    if (M().vibe) clenchRandom();
     note2(pick(OPEN_NOTES));
     renderNotifs();
     render2();
@@ -1468,7 +1475,8 @@ footer{
     else if (ph === "free") hint = "Берите нож, пока телефон не вернулся в руку.";
     else if (ph === "knife") hint = "Режьте: ломтиков " + S2.slices + " из " + SLICES + ".";
     $("a2Hint").textContent = hint;
-    $("a2Mark").style.left = tmax + "%";
+    $("a2Mark").style.left = Math.min(tmax, 100) + "%";
+    $("a2Mark").classList.toggle("hidden", tmax > 100);
 
     var name = "ТЕЛЕФОН";
     if (ph === "free") name = "—";
@@ -1515,7 +1523,7 @@ footer{
     if (S2.phase === "grip"){
       var relaxed = [];
       S2.fingers.forEach(function(f, i){
-        if (!f.cl && S2.clock - f.at >= M().relax){ f.cl = true; relaxed.push(FING[i][1]); }
+        if (M().relax && !f.cl && S2.clock - f.at >= M().relax){ f.cl = true; relaxed.push(FING[i][1]); }
       });
       if (relaxed.length) note2("Палец «" + relaxed.join("», «") + "» сжался сам: мышечная память.", true);
       S2.pull += n ? M().grow * n * sec : -M().decay * sec;
@@ -1558,7 +1566,8 @@ footer{
   $("a2Normal").addEventListener("click", function(){ if (S2.phase !== "done") finish2("normal"); });
 
   var MODE_NOTES = {
-    normal:"Уведомления реже, пальцы терпеливее.",
+    easy:"Разжатые пальцы остаются разжатыми.",
+    hard:"Вибрация и мышечная память возвращают пальцы.",
     ultra:"Для тех, кто держит телефон профессионально."
   };
   var MODE_BTNS = Array.prototype.slice.call(document.querySelectorAll("[data-mode]"));
@@ -1566,9 +1575,16 @@ footer{
   function renderMode(){
     MODE_BTNS.forEach(function(b){ b.setAttribute("aria-pressed", b.getAttribute("data-mode") === mode ? "true" : "false"); });
     $("a2ModeNote").textContent = MODE_NOTES[mode];
-    var s = M().relax / 1000;
-    $("a2RuleRelax").textContent = s + " " + plural(s, "секунду", "секунды", "секунд");
-    $("a2RuleThumb").textContent = String(M().thumbMax);
+    var m = M(), s = m.relax / 1000;
+    $("a2RuleVibe").textContent = m.vibe
+      ? "Каждое новое уведомление вибрацией сжимает один разжатый палец."
+      : "Уведомления пальцы не сжимают: разжатый палец остаётся разжатым.";
+    $("a2RuleRelax").textContent = m.relax
+      ? "Разжатый палец через " + s + " " + plural(s, "секунду", "секунды", "секунд") + " сжимается сам: мышечная память."
+      : "Мышечная память в этом режиме отключена.";
+    $("a2RuleThumb").textContent = m.thumbMax > 100
+      ? "Большой палец разжимается, только когда на экране нет уведомлений: он их листает. Подпись на пальце показывает, чем он занят."
+      : "Большой палец разжимается, только когда на экране нет уведомлений и тяга ниже " + m.thumbMax + " % (метка на шкале тяги). Подпись на пальце показывает, чем он занят.";
   }
 
   MODE_BTNS.forEach(function(b){
@@ -1577,7 +1593,7 @@ footer{
       if (m === mode) return;
       if (running()){ note2("Режим меняется между попытками."); return; }
       mode = m;
-      try { localStorage.setItem("theseus-knife-mode", mode); } catch (e) {}
+      try { localStorage.setItem("theseus-knife-level", mode); } catch (e) {}
       renderMode();
       tries2--;
       reset2();
