@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Нож Тесея. Протокол поэтапной замены деталей</title>
+<title>Нож Тесея. Протокол в трёх актах</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=PT+Serif:ital,wght@0,400;0,700;1,400&family=Unbounded:wght@500;700;800&display=swap" rel="stylesheet">
@@ -21,6 +21,14 @@
   --fresh:#2F6B4F;
   --fresh-plate:#D3DAD6;
   --bar-bg:#C9D0C0;
+  --ph-plate:#3A4245;
+  --ph-edge:#20272A;
+  --ph-ink:#E8ECEA;
+  --skin:#D9B79A;
+  --skin-edge:#A7826A;
+  --skin-ink:#3A2A20;
+  --table:#D2C3A6;
+  --table-edge:#9C8A68;
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
   padding-bottom:env(safe-area-inset-bottom,0px);
@@ -39,6 +47,14 @@
     --fresh:#7FC4A0;
     --fresh-plate:#6E7A76;
     --bar-bg:#2E3739;
+    --ph-plate:#11171A;
+    --ph-edge:#050809;
+    --ph-ink:#D9DED3;
+    --skin:#8C6B57;
+    --skin-edge:#5E4637;
+    --skin-ink:#F3E6DC;
+    --table:#3B342A;
+    --table-edge:#6B5D47;
   }
 }
 :root[data-theme="dark"]{
@@ -54,6 +70,14 @@
   --fresh:#7FC4A0;
   --fresh-plate:#6E7A76;
   --bar-bg:#2E3739;
+  --ph-plate:#11171A;
+  --ph-edge:#050809;
+  --ph-ink:#D9DED3;
+  --skin:#8C6B57;
+  --skin-edge:#5E4637;
+  --skin-ink:#F3E6DC;
+  --table:#3B342A;
+  --table-edge:#6B5D47;
 }
 *,*::before,*::after{box-sizing:inherit}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
@@ -97,6 +121,26 @@ h1{
   font-style:italic;
 }
 .basis cite{font-style:normal}
+.basis + .basis{margin-top:.5rem}
+
+.acts{
+  display:flex;flex-wrap:wrap;gap:.5rem;
+  margin:1.5rem 0 0;
+  padding-bottom:1rem;
+  border-bottom:1px solid var(--rule);
+}
+.acts button{font-size:.9rem;padding:.45rem .8rem;background:transparent;color:var(--ink)}
+.acts button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.acts .reg{margin-left:auto;border-color:var(--stamp);color:var(--stamp)}
+.acts .reg[aria-pressed="true"]{background:var(--stamp);color:var(--paper)}
+@media (max-width:640px){.acts .reg{margin-left:0}}
+.act-title{
+  font-family:"Unbounded","Arial Black",sans-serif;
+  font-weight:700;
+  font-size:clamp(1.35rem,4.5vw,1.9rem);
+  line-height:1.15;
+  margin:2rem 0 .75rem;
+}
 
 .stage{
   margin:2.5rem 0 1.5rem;
@@ -108,7 +152,7 @@ h1{
   display:flex;justify-content:space-between;align-items:baseline;gap:1rem;flex-wrap:wrap;
   margin-bottom:1rem;
 }
-.stage-title h2{font-size:1.125rem;margin:0}
+.stage-title h3{font-size:1.125rem;margin:0}
 .stage-title span{font-size:.9rem;color:var(--ink-soft)}
 
 .plates{
@@ -126,6 +170,8 @@ h1{
   color:var(--plate-ink);
   text-align:center;
   box-shadow:inset 0 -3px 0 rgba(0,0,0,.18);
+  font-weight:400;
+  transition:transform .15s;
 }
 .plate::before,.plate::after{
   content:"";position:absolute;top:5px;width:6px;height:6px;border-radius:50%;
@@ -145,9 +191,14 @@ h1{
   background-image:repeating-linear-gradient(115deg,transparent 0 7px,rgba(0,0,0,.07) 7px 8px);
 }
 .plate.new{background:var(--fresh-plate);border-color:var(--fresh)}
+.plate.ph{background:var(--ph-plate);border-color:var(--ph-edge);color:var(--ph-ink)}
+.plate.ph::before,.plate.ph::after{background:#59646A}
 .plate.space{width:2.6rem}
 .plate.space .ch{font-size:.7rem;font-family:"PT Serif",serif;font-weight:400;line-height:3.05}
 .plate.just{animation:arrive .45s ease-out}
+button.plate{cursor:pointer}
+button.plate:disabled{opacity:1;cursor:default}
+.plate.sel{outline:3px solid var(--stamp);outline-offset:3px;transform:translateY(-5px)}
 @keyframes arrive{
   from{transform:translateY(-14px);opacity:0}
   to{transform:none;opacity:1}
@@ -162,9 +213,12 @@ h1{
 .field{border-top:1px solid var(--rule);padding-top:.5rem}
 .field .k{font-size:.875rem;color:var(--ink-soft)}
 .field .v{font-weight:700}
-.bar{height:10px;background:var(--bar-bg);margin-top:.35rem;border:1px solid var(--rule)}
+.bar{position:relative;height:10px;background:var(--bar-bg);margin-top:.35rem;border:1px solid var(--rule)}
 .bar i{display:block;height:100%;background:var(--ink);transition:width .4s}
 .bar.knife i{background:var(--stamp)}
+.bar.pull i{transition:width .1s linear}
+.bar.pull.hot i{background:var(--stamp)}
+.bar .mark{position:absolute;top:-5px;bottom:-5px;width:2px;background:var(--stamp)}
 
 .verdict{
   margin-top:1.25rem;
@@ -198,7 +252,7 @@ button:focus-visible{outline:3px solid var(--stamp);outline-offset:3px}
   margin-top:2.5rem;
 }
 @media (max-width:720px){.cols{grid-template-columns:1fr}}
-.cols h2{font-size:1.125rem;margin:0 0 .75rem;border-bottom:1px solid var(--rule);padding-bottom:.35rem}
+.cols h3{font-size:1.125rem;margin:0 0 .75rem;border-bottom:1px solid var(--rule);padding-bottom:.35rem}
 ol.log{margin:0;padding-left:1.5rem}
 ol.log li{margin-bottom:.8rem}
 ol.log li b{display:block}
@@ -212,9 +266,187 @@ ol.log li b{display:block}
   padding:1.5rem 1rem;
   border:2px dashed var(--stamp);
 }
-.second h2{margin:0 0 1rem;font-size:1.125rem}
+.second h3{margin:0 0 1rem;font-size:1.125rem}
 .second .answers{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1rem}
-.hidden{display:none}
+.hidden{display:none !important}
+
+/* ---------- Акт II ---------- */
+.scene{
+  display:grid;
+  grid-template-columns:auto minmax(0,13rem) auto;
+  justify-content:center;
+  align-items:center;
+  gap:.3rem;
+  padding:0 .9rem;
+  margin:.5rem 0 0;
+}
+.hand{display:flex;flex-direction:column;gap:.5rem}
+.finger{
+  font-size:.75rem;
+  min-width:4.6rem;
+  padding:.55rem .55rem;
+  background:var(--skin);
+  border:2px solid var(--skin-edge);
+  color:var(--skin-ink);
+  transition:transform .2s,background .2s;
+}
+.hand.left .finger{border-radius:999px 6px 6px 999px}
+.hand.right .finger{border-radius:6px 999px 999px 6px}
+.finger.thumb{min-height:5rem}
+.finger.open{background:transparent;border-style:dashed;color:var(--ink-soft)}
+.hand.left .finger.open{transform:translateX(-.9rem)}
+.hand.right .finger.open{transform:translateX(.9rem)}
+.finger.locked{border-color:var(--stamp);box-shadow:0 0 0 2px var(--stamp)}
+
+.phone{
+  position:relative;
+  height:22rem;
+  border-radius:1.6rem;
+  background:#2C3336;
+  border:2px solid #14191B;
+  padding:.5rem;
+  box-shadow:0 6px 0 rgba(0,0,0,.18);
+  transition:transform .5s;
+}
+.phone.buzz{animation:buzz .3s}
+@keyframes buzz{
+  20%{translate:-3px 0;rotate:-1.2deg}
+  40%{translate:3px 0;rotate:1.2deg}
+  60%{translate:-2px 0;rotate:-.6deg}
+  80%{translate:2px 0;rotate:.6deg}
+}
+.phone.dropped{transform:translateY(1.2rem) rotate(-7deg)}
+.phone.fused{box-shadow:0 0 0 3px var(--stamp),0 6px 0 rgba(0,0,0,.18)}
+.screen{
+  height:100%;
+  border-radius:1.15rem;
+  background:#0E1416;
+  color:#E8ECEA;
+  padding:.4rem .45rem;
+  overflow:hidden;
+  display:flex;flex-direction:column;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+.status{display:flex;justify-content:space-between;font-size:.66rem;opacity:.75;padding:0 .3rem}
+.punch{width:.55rem;height:.55rem;border-radius:50%;background:#000;border:1px solid #2A3336;margin:-.85rem auto .2rem}
+.bigclock{font-size:2.3rem;font-weight:200;text-align:center;margin:.4rem 0 .6rem;line-height:1}
+.notifs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.35rem}
+.notif{display:flex;align-items:stretch;background:#252E30;border-radius:.75rem;overflow:hidden;animation:slidein .25s ease-out}
+@keyframes slidein{from{transform:translateY(-8px);opacity:0}to{transform:none;opacity:1}}
+.notif .open{
+  flex:1;min-width:0;text-align:left;
+  background:transparent;border:0;color:inherit;
+  font:inherit;font-weight:400;font-size:.7rem;line-height:1.25;
+  padding:.4rem .5rem;
+}
+.notif .open b{display:block;font-size:.62rem;opacity:.7;font-weight:600;margin-bottom:.1rem}
+.notif .x{
+  border:0;border-left:1px solid #34403F;
+  background:transparent;color:inherit;
+  padding:0;min-width:2.1rem;font-size:1.1rem;font-weight:400;
+}
+.more{font-size:.68rem;text-align:center;opacity:.65;margin:.4rem 0 0;font-style:normal}
+.back{
+  display:none;
+  height:100%;
+  border-radius:1.15rem;
+  background:linear-gradient(160deg,#4A5357,#2C3336);
+  position:relative;
+}
+.phone.dropped .screen{display:none}
+.phone.dropped .back{display:block}
+.cams{position:absolute;top:.8rem;left:.8rem;display:grid;gap:.35rem}
+.cams i{display:block;width:1.6rem;height:1.6rem;border-radius:50%;background:#0A0D0E;border:3px solid #5A656A}
+.backlabel{position:absolute;bottom:1.2rem;left:0;right:0;text-align:center;color:#AEB8BC;font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;font-family:system-ui,sans-serif}
+.backcount{display:block;letter-spacing:0;text-transform:none;margin-top:.4rem;color:#E8ECEA}
+
+.table{
+  position:relative;
+  display:flex;align-items:center;justify-content:center;gap:1.5rem;flex-wrap:wrap;
+  margin-top:2rem;
+  padding:1.6rem 1rem 1rem;
+  background:var(--table);
+  border:2px solid var(--table-edge);
+  border-radius:4px;
+}
+.table-label{position:absolute;top:.3rem;left:.6rem;font-size:.75rem;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.12em}
+.knife{
+  display:flex;flex-direction:column;align-items:center;gap:.25rem;
+  background:transparent;color:var(--ink);
+  border:2px dashed transparent;
+  padding:.35rem .5rem;
+  font-weight:400;
+}
+.knife:hover:not(:disabled){border-color:var(--rule)}
+.knife .row{display:flex;gap:.25rem}
+.knife .row span{
+  display:block;width:1.7rem;padding:.15rem 0;
+  background:var(--plate);border:2px solid var(--plate-edge);border-radius:3px;color:var(--plate-ink);
+  font-family:"Unbounded","Arial Black",sans-serif;font-weight:700;font-size:.95rem;
+}
+.knife small{font-size:.75rem;color:var(--ink-soft)}
+.knife.taken{border-color:var(--stamp);border-style:solid}
+.knife.gone .row{opacity:.25}
+.sausage-wrap{display:flex;align-items:center;gap:.6rem;width:15rem;max-width:100%}
+.sausage,.slice{
+  background:
+    radial-gradient(circle at 30% 40%,#F2D6D2 0 1.5px,transparent 2.5px) 0 0/11px 9px,
+    #B4555E;
+  border:2px solid #7E3540;
+}
+.sausage{height:2.6rem;width:11rem;border-radius:1.3rem;transition:width .3s;flex:none}
+.slices{display:flex;gap:.25rem;flex-wrap:wrap}
+.slice{width:1.7rem;height:1.7rem;border-radius:50%;animation:arrive .3s ease-out}
+
+.rules{margin-top:1.75rem;border-top:1px solid var(--rule);padding-top:.75rem}
+.rules summary{font-weight:700;cursor:pointer}
+.rules ol{padding-left:1.4rem;margin:.75rem 0 0}
+.rules li{margin-bottom:.35rem}
+
+/* ---------- Акт III ---------- */
+#act3 .plate{width:3.7rem}
+#act3 .plate .ch{font-size:1.9rem}
+.stock3{margin-top:2rem}
+.stock3 h3{font-size:1.125rem;margin:0 0 .5rem;border-bottom:1px solid var(--rule);padding-bottom:.35rem}
+.stock3 .plates{min-height:0;margin-top:.75rem}
+
+/* ---------- Реестр ---------- */
+.registry{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(15rem,1fr));
+  gap:1rem;
+  margin-top:1.5rem;
+}
+.entry{border:1px solid var(--rule);background:var(--paper-2);padding:1rem}
+.entry.locked{border-style:dashed;background:transparent;color:var(--ink-soft)}
+.entry .act{font-size:.8rem;color:var(--stamp);font-weight:700}
+.entry h3{margin:.25rem 0 .5rem;font-size:1.05rem;line-height:1.3}
+.entry p{margin:0;font-size:.95rem}
+
+/* ---------- Заключение ---------- */
+.modal{
+  position:fixed;inset:0;z-index:10;
+  display:flex;align-items:center;justify-content:center;
+  padding:16px;
+  background:rgba(10,14,15,.6);
+}
+.card{
+  width:100%;max-width:32rem;max-height:90vh;overflow:auto;
+  background:var(--paper);
+  border:3px solid var(--stamp);
+  padding:1.5rem 1.25rem 1rem;
+  animation:arrive .3s ease-out;
+}
+.card-head{display:flex;justify-content:space-between;align-items:center;gap:.75rem;flex-wrap:wrap}
+.card .num{font-size:.8rem;color:var(--stamp);font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.stamp{
+  display:inline-block;transform:rotate(-4deg);
+  border:2px solid var(--stamp);color:var(--stamp);
+  font-family:"Unbounded","Arial Black",sans-serif;font-size:.65rem;font-weight:700;
+  padding:.2rem .45rem;text-transform:uppercase;
+}
+.card h3{font-family:"Unbounded","Arial Black",sans-serif;font-size:1.5rem;line-height:1.15;margin:.75rem 0 .75rem}
+.card p{margin:0 0 .5rem}
 
 footer{
   margin-top:3rem;
@@ -223,100 +455,485 @@ footer{
   font-size:.875rem;
   color:var(--ink-soft);
 }
+
+@media (max-width:520px){
+  .sheet{padding:1.5rem 1rem 3rem}
+  .stage{padding:1.25rem .75rem 1rem}
+  .scene{padding:0 .45rem;gap:.2rem}
+  .finger{font-size:.66rem;min-width:3.7rem;padding:.45rem .3rem}
+  .hand.left .finger.open{transform:translateX(-.45rem)}
+  .hand.right .finger.open{transform:translateX(.45rem)}
+  .phone{height:20rem}
+  .bigclock{font-size:1.8rem}
+  .sausage-wrap{width:100%;justify-content:center}
+}
 @media (prefers-reduced-motion: reduce){
-  .plate.just{animation:none}
-  .bar i{transition:none}
+  .plate.just,.notif,.slice,.card{animation:none}
+  .phone.buzz{animation:none}
+  .bar i,.finger,.phone,.sausage,.plate{transition:none}
 }
 </style>
 </head>
 <body>
 <main class="sheet">
   <div class="form-head">
-    <span>Форма НТ-2,4</span>
-    <span>Методика 5,1</span>
+    <span>Форма НТ-3,0</span>
+    <span>Методика 5,2</span>
   </div>
 
   <h1>Нож Тесея</h1>
-  <p class="lead">Протокол поэтапной замены деталей изделия «нож» до получения изделия «корабль Тесея». Каждая операция заменяет или устанавливает одну деталь. После каждой операции комиссия устанавливает, является ли изделие ножом.</p>
-  <p class="basis">Основание: «Буквы нужно заменить». <cite>Каракуртыч, 4PDA</cite></p>
+  <p class="lead">Протокол в трёх актах. В акте I из ножа получают корабль, заменяя буквы. В акте II пытаются взять нож, для чего выпускают из рук телефон. В акте III, раз телефон не выпускается, нож делают из телефона. Каждое заключение комиссии вносится в реестр.</p>
 
-  <section class="stage" aria-live="polite">
-    <div class="stage-title">
-      <h2 id="itemName">Изделие: НОЖ</h2>
-      <span id="stepInfo">Операция 0 из 13</span>
+  <nav class="acts" aria-label="Акты протокола">
+    <button type="button" data-act="act1" aria-pressed="true">Акт I · Буквы</button>
+    <button type="button" data-act="act2" aria-pressed="false">Акт II · Хватка</button>
+    <button type="button" data-act="act3" aria-pressed="false">Акт III · Телефон Тесея</button>
+    <button type="button" data-act="reg" class="reg" id="navReg" aria-pressed="false">Реестр · 0/10</button>
+  </nav>
+
+  <!-- ================= АКТ I ================= -->
+  <section class="act" id="act1">
+    <h2 class="act-title">Акт I. Буквы</h2>
+    <p class="lead">Поэтапная замена деталей изделия «нож» до получения изделия «корабль Тесея». Каждая операция заменяет или устанавливает одну деталь. После каждой операции комиссия устанавливает, является ли изделие ножом.</p>
+    <p class="basis">«Буквы нужно заменить». <cite>Каракуртыч, 4PDA</cite></p>
+
+    <section class="stage" aria-live="polite">
+      <div class="stage-title">
+        <h3 id="itemName">Изделие: НОЖ</h3>
+        <span id="stepInfo">Операция 0 из 13</span>
+      </div>
+      <div class="plates" id="plates"></div>
+
+      <div class="readout">
+        <div class="field">
+          <div class="k">Индекс ножевости</div>
+          <div class="v" id="knifeVal">100 %</div>
+          <div class="bar knife"><i style="width:100%"></i></div>
+        </div>
+        <div class="field">
+          <div class="k">Сходство с кораблём Тесея</div>
+          <div class="v" id="simVal">0 %</div>
+          <div class="bar"><i id="simBar" style="width:0%"></i></div>
+        </div>
+        <div class="field">
+          <div class="k">Исходных деталей в изделии</div>
+          <div class="v" id="origVal">3 из 3</div>
+        </div>
+        <div class="field">
+          <div class="k">Режет «Краковскую»</div>
+          <div class="v" id="cutVal">да</div>
+        </div>
+      </div>
+
+      <div class="verdict">
+        <span class="k">Заключение комиссии</span>
+        <span id="verdict"></span>
+      </div>
+    </section>
+
+    <div class="controls">
+      <button id="next">Выполнить операцию</button>
+      <button id="reject" class="quiet">Отклонить операцию</button>
+      <button id="assemble" class="hidden">Собрать изделие из снятых деталей</button>
+      <button id="reset" class="quiet">Начать заново</button>
     </div>
-    <div class="plates" id="plates"></div>
+    <p class="note" id="note"></p>
 
-    <div class="readout">
-      <div class="field">
-        <div class="k">Индекс ножевости</div>
-        <div class="v" id="knifeVal">100 %</div>
-        <div class="bar knife"><i style="width:100%"></i></div>
+    <section class="second hidden" id="second" aria-live="polite">
+      <h3>Изделие № 2, собранное из снятых деталей</h3>
+      <div class="plates" id="plates2"></div>
+      <div class="verdict">
+        <span class="k">Заключение комиссии</span>
+        <span>Из исходных деталей собран второй нож. Индекс ножевости второго ножа – 100 %. Индекс ножевости корабля Тесея – 100 %. В эксплуатации находятся два ножа, один из которых корабль. Рекомендация ревизии 2,4 «снятые детали не собирать» нарушена. Ответственный – вы.</span>
       </div>
-      <div class="field">
-        <div class="k">Сходство с кораблём Тесея</div>
-        <div class="v" id="simVal">0 %</div>
-        <div class="bar"><i id="simBar" style="width:0%"></i></div>
+      <p style="margin:1.25rem 0 0"><b>Вопрос комиссии:</b> каким из двух изделий Тесей режет «Краковскую»?</p>
+      <div class="answers">
+        <button class="quiet" data-answer>Ножом</button>
+        <button class="quiet" data-answer>Кораблём</button>
       </div>
-      <div class="field">
-        <div class="k">Исходных деталей в изделии</div>
-        <div class="v" id="origVal">3 из 3</div>
-      </div>
-      <div class="field">
-        <div class="k">Режет «Краковскую»</div>
-        <div class="v" id="cutVal">да</div>
-      </div>
-    </div>
+      <p class="note" id="answerNote"></p>
+    </section>
 
-    <div class="verdict">
-      <span class="k">Заключение комиссии</span>
-      <span id="verdict"></span>
+    <div class="cols">
+      <section>
+        <h3>Журнал операций</h3>
+        <ol class="log" id="log"></ol>
+        <p class="empty" id="logEmpty">Операции не проводились. Изделие исправно, что подозрительно.</p>
+      </section>
+      <section class="stock">
+        <h3>Склад снятых деталей</h3>
+        <div class="plates" id="stock"></div>
+        <p class="empty" id="stockEmpty">Склад пуст. Склад на это не рассчитан.</p>
+      </section>
     </div>
   </section>
 
-  <div class="controls">
-    <button id="next">Выполнить операцию</button>
-    <button id="reject" class="quiet">Отклонить операцию</button>
-    <button id="assemble" class="hidden">Собрать изделие из снятых деталей</button>
-    <button id="reset" class="quiet">Начать заново</button>
-  </div>
-  <p class="note" id="note"></p>
+  <!-- ================= АКТ II ================= -->
+  <section class="act hidden" id="act2">
+    <h2 class="act-title">Акт II. Хватка</h2>
+    <p class="lead">Нож лежит на столе. Рядом лежит «Краковская». Телефон находится в руке. Задача – взять нож и отрезать три ломтика.</p>
+    <p class="basis">«Чтоб в руки взять нож, надо из рук выпустить телефон, но такой телефон из рук выпустить не реально.» <cite>AngelOfMors, 4PDA</cite></p>
 
-  <section class="second hidden" id="second" aria-live="polite">
-    <h2>Изделие № 2, собранное из снятых деталей</h2>
-    <div class="plates" id="plates2"></div>
-    <div class="verdict">
-      <span class="k">Заключение комиссии</span>
-      <span>Из исходных деталей собран второй нож. Индекс ножевости второго ножа - 100 %. Индекс ножевости корабля Тесея - 100 %. В эксплуатации находятся два ножа, один из которых корабль. Рекомендация ревизии 2,4 «снятые детали не собирать» нарушена. Ответственный - вы.</span>
+    <section class="stage">
+      <div class="stage-title">
+        <h3 id="a2Name">Изделие в руке: ТЕЛЕФОН</h3>
+        <span id="a2Try">Попытка 1</span>
+      </div>
+
+      <div class="scene">
+        <div class="hand left" id="handL"></div>
+        <div class="phone" id="phone">
+          <div class="screen">
+            <div class="status"><span id="a2Time">16:52</span><span>5G · 100 %</span></div>
+            <div class="punch"></div>
+            <div class="bigclock" id="a2Clock">16:52</div>
+            <ul class="notifs" id="a2Notifs" aria-label="Уведомления"></ul>
+            <p class="more" id="a2More"></p>
+          </div>
+          <div class="back">
+            <span class="cams" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="backlabel">S26 Ultra<span class="backcount" id="a2BackCount"></span></span>
+          </div>
+        </div>
+        <div class="hand right" id="handR"></div>
+      </div>
+
+      <div class="table">
+        <span class="table-label">Стол</span>
+        <button type="button" class="knife" id="a2Knife">
+          <span class="row" aria-hidden="true"><span>Н</span><span>О</span><span>Ж</span></span>
+          <small id="a2KnifeCap">нож</small>
+        </button>
+        <div class="sausage-wrap" aria-label="Колбаса «Краковская»">
+          <div class="sausage" id="a2Sausage"></div>
+          <div class="slices" id="a2Slices"></div>
+        </div>
+      </div>
+
+      <div class="readout">
+        <div class="field">
+          <div class="k">Тяга экрана</div>
+          <div class="v" id="a2PullVal">60 %</div>
+          <div class="bar pull" id="a2PullBarBox"><i id="a2PullBar" style="width:60%"></i><span class="mark" style="left:30%" title="Порог большого пальца"></span></div>
+        </div>
+        <div class="field">
+          <div class="k">Пальцев разжато</div>
+          <div class="v" id="a2Open">0 из 5</div>
+        </div>
+        <div class="field">
+          <div class="k">Непрочитанных уведомлений</div>
+          <div class="v" id="a2Unread">1</div>
+        </div>
+        <div class="field">
+          <div class="k">Время вне рук</div>
+          <div class="v" id="a2Free">0,0 с</div>
+        </div>
+      </div>
+
+      <div class="verdict">
+        <span class="k">Заключение комиссии</span>
+        <span id="a2Verdict"></span>
+      </div>
+    </section>
+
+    <div class="controls">
+      <button id="a2Start">Начать попытку</button>
+      <button id="a2Take" disabled>Взять нож</button>
+      <button id="a2Cut" disabled>Отрезать ломтик</button>
+      <button id="a2Pen" class="quiet">Достать S Pen</button>
+      <button id="a2Normal" class="quiet">Ну это нормально</button>
     </div>
-    <p style="margin:1.25rem 0 0"><b>Вопрос комиссии:</b> каким из двух изделий Тесей режет «Краковскую»?</p>
-    <div class="answers">
-      <button class="quiet" data-answer>Ножом</button>
-      <button class="quiet" data-answer>Кораблём</button>
-    </div>
-    <p class="note" id="answerNote"></p>
+    <p class="note" id="a2Note" aria-live="polite"></p>
+
+    <details class="rules" open>
+      <summary>Регламент попытки</summary>
+      <ol>
+        <li>Нажатие на палец разжимает его. Чтобы выпустить телефон, нужно разжать все пять.</li>
+        <li>Каждое новое уведомление вибрацией сжимает один разжатый палец.</li>
+        <li>Разжатый палец через 4 секунды сжимается сам: мышечная память.</li>
+        <li>Непрочитанные уведомления повышают тягу экрана. Когда уведомлений нет, тяга падает.</li>
+        <li>Большой палец разжимается, только когда на экране нет уведомлений и тяга ниже 30 %. Он листает.</li>
+        <li>Уведомление смахивается крестиком. Нажатие на текст уведомления его открывает. Не открывайте.</li>
+        <li>При тяге 100 % хватка становится окончательной.</li>
+        <li>Выпущенный телефон лежит экраном вниз и продолжает получать уведомления. Если тяга дойдёт до 100 %, он вернётся в руку сам.</li>
+      </ol>
+    </details>
   </section>
 
-  <div class="cols">
-    <section>
-      <h2>Журнал операций</h2>
-      <ol class="log" id="log"></ol>
-      <p class="empty" id="logEmpty">Операции не проводились. Изделие исправно, что подозрительно.</p>
+  <!-- ================= АКТ III ================= -->
+  <section class="act hidden" id="act3">
+    <h2 class="act-title">Акт III. Телефон Тесея</h2>
+    <p class="lead">Телефон из рук не выпускается (см. акт II). Следовательно, нож нужно получить из телефона, не выпуская его. Выберите деталь изделия, затем снимите её на склад или замените деталью со склада.</p>
+    <p class="basis">«…такой телефон из рук выпустить не реально.» <cite>AngelOfMors, 4PDA</cite></p>
+    <p class="basis">«Буквы нужно заменить». <cite>Каракуртыч, 4PDA</cite></p>
+
+    <section class="stage" aria-live="polite">
+      <div class="stage-title">
+        <h3 id="a3Name">Изделие в руке: ТЕЛЕФОН</h3>
+        <span id="a3Ops">Операций: 0</span>
+      </div>
+      <div class="plates" id="a3Plates"></div>
+
+      <div class="readout">
+        <div class="field">
+          <div class="k">Ножевость</div>
+          <div class="v" id="a3KnifeVal">0 %</div>
+          <div class="bar knife"><i id="a3KnifeBar" style="width:0%"></i></div>
+        </div>
+        <div class="field">
+          <div class="k">Телефонность</div>
+          <div class="v" id="a3PhoneVal">100 %</div>
+          <div class="bar"><i id="a3PhoneBar" style="width:100%"></i></div>
+        </div>
+        <div class="field">
+          <div class="k">Исходных деталей акта I в изделии</div>
+          <div class="v" id="a3Orig">0 из 3</div>
+        </div>
+        <div class="field">
+          <div class="k">Звонит</div>
+          <div class="v" id="a3Ring">да</div>
+        </div>
+      </div>
+
+      <div class="verdict">
+        <span class="k">Заключение комиссии</span>
+        <span id="a3Verdict"></span>
+      </div>
     </section>
-    <section class="stock">
-      <h2>Склад снятых деталей</h2>
-      <div class="plates" id="stock"></div>
-      <p class="empty" id="stockEmpty">Склад пуст. Склад на это не рассчитан.</p>
+
+    <div class="controls">
+      <button id="a3Remove" disabled>Снять выбранную деталь на склад</button>
+      <button id="a3Reset" class="quiet">Начать заново</button>
+    </div>
+    <p class="note" id="a3Note" aria-live="polite"></p>
+
+    <section class="stock3">
+      <h3>Склад</h3>
+      <p class="empty" id="a3StockNote"></p>
+      <div class="plates" id="a3Stock"></div>
+      <p class="empty hidden" id="a3StockEmpty">Склад пуст.</p>
+      <div class="controls"><button id="a3Disasm" class="quiet hidden">Разобрать изделие № 2 из акта I</button></div>
     </section>
-  </div>
+  </section>
+
+  <!-- ================= РЕЕСТР ================= -->
+  <section class="act hidden" id="reg">
+    <h2 class="act-title">Реестр заключений</h2>
+    <p class="lead" id="regLead">Получено 0 из 10.</p>
+    <div class="registry" id="registry"></div>
+    <div class="controls"><button id="regClear" class="quiet">Очистить реестр</button></div>
+  </section>
 
   <footer>
-    Ревизия 2,4. Ревизия 2,3 отозвана: в ней из снятых деталей собрали второй нож, и Тесей перестал понимать, каким из двух режет.
+    Ревизия 3,0. Добавлены акты II и III по материалам темы «Samsung Galaxy S26 Ultra», сообщения № 5255 и 5256. Ревизия 2,4 действует в части акта I: в ней из снятых деталей собрали второй нож, и Тесей перестал понимать, каким из двух режет. Реестр заключений хранится в этом браузере.
   </footer>
 </main>
 
+<div class="modal hidden" id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <div class="card">
+    <div class="card-head">
+      <span class="num" id="mNum"></span>
+      <span class="stamp" id="mStamp"></span>
+    </div>
+    <h3 id="mTitle"></h3>
+    <p id="mText"></p>
+    <p class="basis hidden" id="mQuote"></p>
+    <div class="controls">
+      <button id="mOk">Принято</button>
+      <button id="mReg" class="quiet">Открыть реестр</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function(){
+  var $ = function(id){return document.getElementById(id);};
+  var G = {act1:"none"};
+  var current = "act1";
+
+  function inv(n){return ("000" + n).slice(-4);}
+  function pick(a){return a[Math.floor(Math.random() * a.length)];}
+  function plural(n, one, few, many){
+    var m10 = n % 10, m100 = n % 100;
+    if (m10 === 1 && m100 !== 11) return one;
+    if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
+    return many;
+  }
+
+  function plateEl(p, fresh, asBtn){
+    var d = document.createElement(asBtn ? "button" : "div");
+    if (asBtn) d.type = "button";
+    var kind = p.orig ? "orig" : (p.phone ? "ph" : "new");
+    d.className = "plate " + kind + (p.ch === " " ? " space" : "") + (fresh ? " just" : "");
+    var c = document.createElement("span");
+    c.className = "ch";
+    c.textContent = p.ch === " " ? "пробел" : p.ch;
+    var i = document.createElement("span");
+    i.className = "inv";
+    i.textContent = "инв. " + inv(p.inv);
+    d.appendChild(c); d.appendChild(i);
+    var what = p.orig ? "Исходная деталь" : (p.phone ? "Деталь телефона" : "Новая деталь");
+    d.setAttribute("title", what + ", инв. " + inv(p.inv));
+    if (asBtn) d.setAttribute("aria-label", "Деталь " + p.ch + ", " + what.toLowerCase() + ", инв. " + inv(p.inv));
+    return d;
+  }
+
+  /* ================= РЕЕСТР ================= */
+  var ENDINGS = [
+    {id:"ship", act:"Акт I", title:"Корабль Тесея",
+     text:"В изделии не осталось ни одной исходной детали. Изделие называется «корабль Тесея» и режет «Краковскую». Комиссия подтверждает: это тот же нож.",
+     hint:"Довести протокол замены до последней операции."},
+    {id:"two", act:"Акт I", title:"Два ножа, один из которых корабль",
+     text:"Из снятых деталей собран второй нож. Индекс ножевости обоих изделий – 100 %. Тесей перестал понимать, каким из двух режет. Ответственный – вы.",
+     hint:"Не оставлять снятые детали без дела."},
+    {id:"grip", act:"Акт II", title:"Хватка намертво",
+     text:"Тяга экрана достигла 100 %. Хватка признана окончательной. Телефон считается продолжением руки, рука – продолжением телефона. Нож считается легендой.",
+     hint:"Позволить уведомлениям победить."},
+    {id:"normal", act:"Акт II", title:"Ну это нормально",
+     text:"Телефон оставлен в руке, нож – на столе, колбаса – целой. Положение признано нормальным и закреплено.",
+     quote:["Ну это нормально.", "4PDA"],
+     hint:"Смириться."},
+    {id:"pen", act:"Акт II", title:"Перо Тесея",
+     text:"Из корпуса извлечён S Pen. S Pen не является ножом: S Pen является пером. Колбаса не нарезана, а подписана. Перо Тесея будет рассмотрено в ревизии 4,0.",
+     hint:"Поискать режущую кромку в самом телефоне."},
+    {id:"blind", act:"Акт II", title:"Знающие не знают",
+     text:"Нож на столе не обнаружен: из-под телефона его не видно. Комиссия установила, что нож существует только для тех, у кого свободна рука.",
+     quote:["Получается, что знающие не знают о существовании ножей?", "DenGooRoo, 4PDA"],
+     hint:"Настойчиво тянуться к ножу, не выпуская телефона."},
+    {id:"safety", act:"Акт II", title:"Безопасность общества",
+     text:"Телефон выпущен, нож взят, отрезано три ломтика «Краковской». Сразу после этого телефон возвращён в руку, нож изъят. Колбаса приобщена к делу.",
+     quote:["Некоторым для безопасности общества телефон лучше вообще не выпускать из рук.", "Zbagoin, 4PDA"],
+     hint:"Выпустить телефон и нарезать колбасу."},
+    {id:"phonoknife", act:"Акт III", title:"Телефонож",
+     text:"Из телефона получено изделие НОЖ, но не из исходных деталей. Из рук ничего не выпущено. Комиссия признаёт изделие ножом и на всякий случай телефоном.",
+     hint:"Собрать НОЖ из того, что под рукой."},
+    {id:"same", act:"Акт III", title:"Тот самый нож",
+     text:"НОЖ собран из исходных деталей 0001–0003, телефон разобран на склад, не покидая руки. Выпускать телефон не пришлось: он кончился. Парадокс AngelOfMors закрыт.",
+     hint:"Собрать НОЖ только из исходных деталей акта I."},
+    {id:"empty", act:"Акт III", title:"Пустые руки",
+     text:"Телефон разобран полностью. Выпускать нечего, брать нечем: все детали на складе. Задача решена в общем виде.",
+     hint:"Снять с изделия всё."}
+  ];
+  var KEY = "theseus-knife-endings";
+  var got = loadGot();
+
+  function loadGot(){
+    try {
+      var r = JSON.parse(localStorage.getItem(KEY) || "[]");
+      if (!Array.isArray(r)) return [];
+      return r.filter(function(id){ return ENDINGS.some(function(e){return e.id === id;}); });
+    } catch (e) { return []; }
+  }
+  function saveGot(){ try { localStorage.setItem(KEY, JSON.stringify(got)); } catch (e) {} }
+
+  function endingIndex(id){
+    for (var i = 0; i < ENDINGS.length; i++) if (ENDINGS[i].id === id) return i;
+    return -1;
+  }
+
+  function unlock(id){
+    var fresh = got.indexOf(id) < 0;
+    if (fresh){ got.push(id); saveGot(); }
+    renderRegistry();
+    showEnding(id, fresh);
+  }
+
+  function renderRegistry(){
+    var box = $("registry");
+    box.innerHTML = "";
+    ENDINGS.forEach(function(e, i){
+      var has = got.indexOf(e.id) >= 0;
+      var d = document.createElement("article");
+      d.className = "entry" + (has ? "" : " locked");
+      var a = document.createElement("div");
+      a.className = "act";
+      a.textContent = "№ " + (i + 1) + " · " + e.act;
+      var h = document.createElement("h3");
+      h.textContent = has ? e.title : "Не получено";
+      var p = document.createElement("p");
+      p.textContent = has ? e.text : "Подсказка: " + e.hint;
+      d.appendChild(a); d.appendChild(h); d.appendChild(p);
+      box.appendChild(d);
+    });
+    var n = got.length, all = ENDINGS.length;
+    $("regLead").textContent = "Получено " + n + " из " + all + "." +
+      (n === all ? " Реестр заполнен. Тесей доволен, но не понимает чем." : " Неполученные заключения показаны с подсказкой.");
+    $("navReg").textContent = "Реестр · " + n + "/" + all;
+  }
+
+  var clearArmed = false;
+  $("regClear").addEventListener("click", function(){
+    if (!clearArmed){
+      clearArmed = true;
+      $("regClear").textContent = "Точно очистить? Нажмите ещё раз";
+      return;
+    }
+    clearArmed = false;
+    got = [];
+    saveGot();
+    $("regClear").textContent = "Очистить реестр";
+    renderRegistry();
+  });
+
+  /* ================= ЗАКЛЮЧЕНИЕ (модальное окно) ================= */
+  var modalOpen = false, lastFocus = null;
+
+  function showEnding(id, fresh){
+    var i = endingIndex(id), e = ENDINGS[i];
+    $("mNum").textContent = "Заключение № " + (i + 1) + " из " + ENDINGS.length;
+    $("mStamp").textContent = fresh ? "Внесено в реестр" : "Уже в реестре";
+    $("mTitle").textContent = e.title;
+    $("mText").textContent = e.text;
+    var q = $("mQuote");
+    q.innerHTML = "";
+    if (e.quote){
+      q.appendChild(document.createTextNode("«" + e.quote[0] + "» "));
+      var c = document.createElement("cite");
+      c.textContent = e.quote[1];
+      q.appendChild(c);
+      q.classList.remove("hidden");
+    } else {
+      q.classList.add("hidden");
+    }
+    lastFocus = document.activeElement;
+    $("modal").classList.remove("hidden");
+    modalOpen = true;
+    $("mOk").focus();
+  }
+
+  function closeModal(){
+    $("modal").classList.add("hidden");
+    modalOpen = false;
+    if (lastFocus && lastFocus.focus && !lastFocus.disabled) lastFocus.focus();
+  }
+
+  $("mOk").addEventListener("click", closeModal);
+  $("mReg").addEventListener("click", function(){ closeModal(); showAct("reg"); });
+  $("modal").addEventListener("click", function(ev){ if (ev.target === $("modal")) closeModal(); });
+  document.addEventListener("keydown", function(ev){
+    if (!modalOpen) return;
+    if (ev.key === "Escape"){ ev.preventDefault(); closeModal(); }
+    if (ev.key === "Tab"){
+      ev.preventDefault();
+      (document.activeElement === $("mOk") ? $("mReg") : $("mOk")).focus();
+    }
+  });
+
+  /* ================= НАВИГАЦИЯ ================= */
+  var NAV = Array.prototype.slice.call(document.querySelectorAll(".acts button"));
+
+  function showAct(id){
+    current = id;
+    ["act1","act2","act3","reg"].forEach(function(a){ $(a).classList.toggle("hidden", a !== id); });
+    NAV.forEach(function(b){ b.setAttribute("aria-pressed", b.getAttribute("data-act") === id ? "true" : "false"); });
+    if (id === "act3" && S3.ops === 0) reset3();
+    try { localStorage.setItem("theseus-knife-act", id); } catch (e) {}
+    var nav = document.querySelector(".acts");
+    if (nav.getBoundingClientRect().top < 0) nav.scrollIntoView({block:"start"});
+  }
+  NAV.forEach(function(b){ b.addEventListener("click", function(){ showAct(b.getAttribute("data-act")); }); });
+
+  /* ================= АКТ I ================= */
   var TARGET = "КОРАБЛЬ ТЕСЕЯ";
 
   var INITIAL = {
@@ -345,7 +962,7 @@ footer{
      verdict:"Мягкий знак установлен за счёт внутренних резервов. Изделие одновременно является ножом и кораблём. Реестр допускает это до конца квартала."},
     {op:"add", ch:" ", title:"Установка пробела",
      cut:"да, кормой",
-     verdict:"Масса пробела - 0 г. Стоимость пробела - как у детали."},
+     verdict:"Масса пробела – 0 г. Стоимость пробела – как у детали."},
     {op:"add", ch:"Т", title:"Установка детали Т",
      cut:"да",
      verdict:"Изделию присвоен владелец. Владелец пока не установлен, установлена только его первая буква."},
@@ -373,24 +990,6 @@ footer{
   ];
 
   var parts, stock, step, nextInv, rejectCount, assembled;
-
-  var $ = function(id){return document.getElementById(id);};
-
-  function inv(n){return ("000" + n).slice(-4);}
-
-  function plateEl(p, fresh){
-    var d = document.createElement("div");
-    d.className = "plate " + (p.orig ? "orig" : "new") + (p.ch === " " ? " space" : "") + (fresh ? " just" : "");
-    var c = document.createElement("span");
-    c.className = "ch";
-    c.textContent = p.ch === " " ? "пробел" : p.ch;
-    var i = document.createElement("span");
-    i.className = "inv";
-    i.textContent = "инв. " + inv(p.inv);
-    d.appendChild(c); d.appendChild(i);
-    d.setAttribute("title", (p.orig ? "Исходная деталь" : "Новая деталь") + ", инв. " + inv(p.inv));
-    return d;
-  }
 
   function word(){return parts.map(function(p){return p.ch;}).join("");}
 
@@ -459,6 +1058,10 @@ footer{
     $("note").textContent = "";
     addLog(op.title, line + op.verdict);
     render(np.inv);
+    if (step === OPS.length){
+      G.act1 = "ship";
+      setTimeout(function(){ unlock("ship"); }, 700);
+    }
   }
 
   function reject(){
@@ -476,7 +1079,9 @@ footer{
     addLog("Сборка изделия из снятых деталей", "Использованы детали инв. 0001, 0002, 0003. Получено изделие НОЖ. Склад пуст.");
     stock = [];
     render(null);
+    G.act1 = "assembled";
     $("second").scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block:"start"});
+    setTimeout(function(){ unlock("two"); }, 900);
   }
 
   function reset(){
@@ -490,6 +1095,7 @@ footer{
     nextInv = 4;
     rejectCount = 0;
     assembled = false;
+    G.act1 = "none";
     $("log").innerHTML = "";
     $("note").textContent = "";
     $("answerNote").textContent = "";
@@ -507,7 +1113,551 @@ footer{
     });
   });
 
+  /* ================= АКТ II ================= */
+  var FING = [["Большой","Большой"],["Указат.","Указательный"],["Средний","Средний"],["Безым.","Безымянный"],["Мизинец","Мизинец"]];
+  var RELAX = 4000, THUMB_MAX = 30, SLICES = 3;
+
+  var NOTIFS = [
+    ["4PDA","Вам ответили в теме «Samsung Galaxy S26 Ultra»"],
+    ["4PDA","Репутация +1. Комментарий: «Ну это нормально.»"],
+    ["4PDA","DenGooRoo процитировал ваше сообщение"],
+    ["4PDA","Новое сообщение № 5257 в отслеживаемой теме"],
+    ["One UI","Доступно обновление, 12 МБ. Улучшена стабильность хвата"],
+    ["Здоровье","Вы держите телефон 6 ч. Сделайте перерыв. Телефон возьмите с собой"],
+    ["Галерея","Новое воспоминание: «Колбаса. Год назад»"],
+    ["Батарея","Заряд 100 %. Отпускать незачем"],
+    ["Bixby","Я не расслышал. Повторите, не выпуская телефон"],
+    ["Безопасность","Рядом обнаружен нож. Рекомендуем не выпускать телефон"],
+    ["Тесей","Где мой нож?"],
+    ["Тесей","Не этот. Тот был с другими буквами"],
+    ["Погода","+14 °C. Колбаса продержится до вечера"],
+    ["Маркетплейс","Нож из избранного подешевел на 3 ₽"],
+    ["Маркетплейс","«Краковская» снова в наличии. Резать есть чем?"],
+    ["Календарь","Через 5 мин: «Отпустить телефон»"],
+    ["Шаги","Сегодня 14 шагов. Все – к столу"],
+    ["Telegram","Канал «Знающие»: почему никто не знает о ножах. Часть 4"],
+    ["Почта","Комиссия: протокол НТ-3,0 на подпись"],
+    ["Good Lock","Модуль Hand Lock включён"],
+    ["Часы","Пульс 96. Вы волнуетесь из-за колбасы"],
+    ["Wi-Fi","Подключено к сети «Кухня». Сигнал отличный"]
+  ];
+  var OPEN_NOTES = [
+    "Уведомление открыто. Вы в теме. Тяга экрана +25 %.",
+    "Открыто и прочитано. Залипание 40 секунд, комиссия округлила до 25 %.",
+    "Открыто. Пальцы это почувствовали. Тяга экрана +25 %."
+  ];
+  var KNIFE_TAPS = [
+    "Рука занята телефоном. Нож не берётся.",
+    "Нож находится вне поля зрения: поле зрения занято экраном.",
+    "Комиссия напоминает: чтоб в руки взять нож, надо из рук выпустить телефон.",
+    "Нож на столе не обнаружен. Возможно, его нет."
+  ];
+
+  var S2 = null, tries2 = 0, fingerBtns = [];
+
+  FING.forEach(function(f, i){
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "finger" + (i === 0 ? " thumb" : "");
+    b.textContent = f[0];
+    b.addEventListener("click", function(){ fingerClick(i); });
+    (i === 0 ? $("handL") : $("handR")).appendChild(b);
+    fingerBtns.push(b);
+  });
+
+  function shuffled(n){
+    var a = [];
+    for (var i = 0; i < n; i++) a.push(i);
+    for (i = n - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  function note2(t){ $("a2Note").textContent = t; }
+  function running(){ return S2.phase === "grip" || S2.phase === "free" || S2.phase === "knife"; }
+  function openCount(){ return S2.fingers.filter(function(f){return !f.cl;}).length; }
+
+  function reset2(){
+    tries2++;
+    S2 = {
+      phase:"idle", clock:0, nextAt:0, pull:60,
+      fingers:FING.map(function(){return {cl:true, at:0};}),
+      notifs:[{id:1, app:"4PDA", text:"Вам ответили в теме «Samsung Galaxy S26 Ultra»"}],
+      nid:1, deck:shuffled(NOTIFS.length).filter(function(i){return i !== 0;}), di:0,
+      slices:0, knifeTaps:0, freeMs:0, ending:null
+    };
+    $("phone").classList.remove("dropped", "fused");
+    fingerBtns.forEach(function(b){ b.classList.remove("locked"); });
+    note2("");
+    renderNotifs();
+    render2();
+  }
+
+  function start2(){
+    if (S2.phase !== "idle") return;
+    S2.phase = "grip";
+    S2.nextAt = S2.clock + 1600;
+    note2("Попытка начата. Комиссия наблюдает.");
+    render2();
+  }
+
+  function buzz(){
+    var ph = $("phone");
+    ph.classList.remove("buzz");
+    void ph.offsetWidth;
+    ph.classList.add("buzz");
+  }
+
+  function clenchRandom(){
+    var open = [];
+    S2.fingers.forEach(function(f, i){ if (!f.cl) open.push(i); });
+    if (!open.length) return null;
+    var i = pick(open);
+    S2.fingers[i].cl = true;
+    return i;
+  }
+
+  function spawn(){
+    var t = NOTIFS[S2.deck[S2.di % S2.deck.length]];
+    S2.di++;
+    S2.notifs.push({id:++S2.nid, app:t[0], text:t[1]});
+    if (S2.phase === "grip"){
+      var i = clenchRandom();
+      if (i !== null) note2("Вибрация. Палец «" + FING[i][1] + "» сжался рефлекторно.");
+    }
+    buzz();
+    var speed = Math.max(0.55, 1 - S2.clock / 45000);
+    S2.nextAt = S2.clock + (1300 + Math.random() * 1100) * speed * (S2.phase === "grip" ? 1 : 1.3);
+    renderNotifs();
+  }
+
+  function dismiss(id){
+    if (S2.phase === "idle") start2();
+    if (S2.phase !== "grip") return;
+    S2.notifs = S2.notifs.filter(function(n){return n.id !== id;});
+    renderNotifs();
+    render2();
+  }
+
+  function openNotif(id){
+    if (S2.phase === "idle") start2();
+    if (S2.phase !== "grip") return;
+    S2.notifs = S2.notifs.filter(function(n){return n.id !== id;});
+    S2.pull = Math.min(100, S2.pull + 25);
+    clenchRandom();
+    note2(pick(OPEN_NOTES));
+    renderNotifs();
+    render2();
+  }
+
+  function fingerClick(i){
+    if (S2.phase === "idle") start2();
+    if (S2.phase === "done"){ note2("Попытка завершена. Нажмите «Новая попытка»."); return; }
+    if (S2.phase !== "grip"){ note2("Телефон уже выпущен. Пальцы свободны и ждут ножа."); return; }
+    var f = S2.fingers[i];
+    if (!f.cl){ note2("Палец уже разжат. Повторно не разжимается."); return; }
+    if (i === 0){
+      if (S2.notifs.length){ note2("Большой палец листает уведомления. Пока на экране есть непрочитанное, он занят."); return; }
+      if (S2.pull >= THUMB_MAX){ note2("Большой палец удерживается тягой экрана: " + Math.round(S2.pull) + " %. Нужно ниже 30 %."); return; }
+    }
+    f.cl = false;
+    f.at = S2.clock;
+    if (openCount() === 5) release();
+    render2();
+  }
+
+  function release(){
+    S2.phase = "free";
+    S2.freeMs = 0;
+    S2.nextAt = S2.clock + 1700;
+    $("phone").classList.add("dropped");
+    note2("Телефон выпущен из рук. Лёг экраном вниз. Рука свободна. Берите нож.");
+  }
+
+  function phoneReturns(){
+    S2.phase = "grip";
+    S2.pull = 60;
+    S2.fingers.forEach(function(f){ f.cl = true; });
+    S2.nextAt = S2.clock + 1500;
+    $("phone").classList.remove("dropped");
+    note2("Тяга экрана 100 %. Телефон вернулся в руку сам." + (S2.slices ? " Нож положен на стол: рука одна." : ""));
+    renderNotifs();
+  }
+
+  function take(){
+    if (S2.phase !== "free") return;
+    S2.phase = "knife";
+    note2("Нож взят. Нож тот же.");
+    render2();
+  }
+
+  function cut(){
+    if (S2.phase !== "knife") return;
+    S2.slices++;
+    if (S2.slices >= SLICES){
+      finish2("safety");
+      return;
+    }
+    note2("Отрезан ломтик № " + S2.slices + ". Общество насторожилось.");
+    render2();
+  }
+
+  function knifeClick(){
+    if (S2.phase === "free"){ take(); return; }
+    if (S2.phase === "knife"){ note2("Нож уже в руке."); return; }
+    if (S2.phase === "done") return;
+    S2.knifeTaps++;
+    if (S2.knifeTaps >= 5){ finish2("blind"); return; }
+    note2(KNIFE_TAPS[S2.knifeTaps - 1]);
+  }
+
+  var DONE_VERDICT = {
+    grip:"Хватка признана окончательной. Ослаблению не подлежит.",
+    normal:"Положение признано нормальным.",
+    pen:"S Pen извлечён. Ножом не является.",
+    blind:"Нож не обнаружен.",
+    safety:"Колбаса нарезана. Телефон возвращён в руку в интересах общества. Нож изъят."
+  };
+
+  function finish2(id){
+    S2.phase = "done";
+    S2.ending = id;
+    if (id === "grip"){
+      S2.fingers.forEach(function(f){ f.cl = true; });
+      $("phone").classList.add("fused");
+      fingerBtns.forEach(function(b){ b.classList.add("locked"); });
+      note2("Тяга экрана 100 %.");
+    } else if (id === "safety"){
+      S2.fingers.forEach(function(f){ f.cl = true; });
+      $("phone").classList.remove("dropped");
+      note2("Ломтик № 3 отрезан. Телефон возвращён в руку.");
+    } else if (id === "pen"){
+      note2("Из корпуса извлечено перо.");
+    } else if (id === "normal"){
+      note2("Ну это нормально.");
+    } else {
+      note2(KNIFE_TAPS[3]);
+    }
+    renderNotifs();
+    render2();
+    setTimeout(function(){ unlock(id); }, 450);
+  }
+
+  function renderNotifs(){
+    var ul = $("a2Notifs");
+    ul.innerHTML = "";
+    var list = S2.notifs.slice(-3).reverse();
+    list.forEach(function(nf){
+      var li = document.createElement("li");
+      li.className = "notif";
+      var o = document.createElement("button");
+      o.type = "button";
+      o.className = "open";
+      var b = document.createElement("b");
+      b.textContent = nf.app;
+      o.appendChild(b);
+      o.appendChild(document.createTextNode(nf.text));
+      o.addEventListener("click", function(){ openNotif(nf.id); });
+      var x = document.createElement("button");
+      x.type = "button";
+      x.className = "x";
+      x.textContent = "×";
+      x.setAttribute("aria-label", "Смахнуть уведомление: " + nf.app);
+      x.addEventListener("click", function(){ dismiss(nf.id); });
+      li.appendChild(o); li.appendChild(x);
+      ul.appendChild(li);
+    });
+    var more = S2.notifs.length - list.length;
+    $("a2More").textContent = more > 0
+      ? "и ещё " + more + " " + plural(more, "уведомление", "уведомления", "уведомлений")
+      : (S2.notifs.length ? "" : "Новых уведомлений нет. Пока.");
+  }
+
+  function render2(){
+    var ph = S2.phase, n = S2.notifs.length, op = openCount();
+    S2.fingers.forEach(function(f, i){
+      var b = fingerBtns[i];
+      var free = ph === "free" || ph === "knife";
+      b.classList.toggle("open", !f.cl || free);
+      b.setAttribute("aria-label", FING[i][1] + " палец, " + ((!f.cl || free) ? "разжат" : "сжат"));
+      b.disabled = ph === "done";
+    });
+
+    var p = Math.round(S2.pull);
+    $("a2PullVal").textContent = p + " %";
+    $("a2PullBar").style.width = p + "%";
+    $("a2PullBarBox").classList.toggle("hot", p >= 70);
+    $("a2Open").textContent = (ph === "free" || ph === "knife" ? 5 : op) + " из 5";
+    $("a2Unread").textContent = String(n);
+    $("a2Free").textContent = (S2.freeMs / 1000).toFixed(1).replace(".", ",") + " с";
+    $("a2BackCount").textContent = n ? "вибрирует · " + n + " " + plural(n, "непрочитанное", "непрочитанных", "непрочитанных") : "лежит тихо";
+    $("a2Try").textContent = "Попытка " + tries2;
+
+    var name = "ТЕЛЕФОН";
+    if (ph === "free") name = "—";
+    if (ph === "knife") name = "НОЖ";
+    if (S2.ending === "grip") name = "ТЕЛЕФОН (намертво)";
+    if (S2.ending === "pen") name = "ТЕЛЕФОН и S Pen";
+    $("a2Name").textContent = "Изделие в руке: " + name;
+
+    var v;
+    if (ph === "idle") v = "Изделие «телефон» удерживается пятью пальцами. Для взятия ножа требуется освободить руку. Порядок – в регламенте ниже.";
+    else if (ph === "grip") v = "Идёт попытка выпустить телефон. Комиссия наблюдает и не вмешивается.";
+    else if (ph === "free") v = "Телефон выпущен из рук. Уведомления продолжают поступать на экран, лежащий вниз. Тяга растёт.";
+    else if (ph === "knife") v = "Нож в руке. Отрезано ломтиков: " + S2.slices + " из " + SLICES + ".";
+    else v = DONE_VERDICT[S2.ending];
+    $("a2Verdict").textContent = v;
+
+    var k = $("a2Knife");
+    k.classList.toggle("taken", ph === "knife");
+    k.classList.toggle("gone", S2.ending === "safety");
+    k.disabled = ph === "done";
+    $("a2KnifeCap").textContent = ph === "knife" ? "в руке" : (S2.ending === "safety" ? "изъят" : "нож");
+
+    $("a2Sausage").style.width = (11 - S2.slices * 2.4) + "rem";
+    var sl = $("a2Slices");
+    while (sl.children.length < S2.slices){ var s = document.createElement("span"); s.className = "slice"; sl.appendChild(s); }
+    while (sl.children.length > S2.slices) sl.removeChild(sl.lastChild);
+
+    var st = $("a2Start");
+    if (ph === "idle"){ st.textContent = "Начать попытку"; st.disabled = false; }
+    else if (ph === "done"){ st.textContent = "Новая попытка"; st.disabled = false; }
+    else { st.textContent = "Попытка идёт"; st.disabled = true; }
+    $("a2Take").disabled = ph !== "free";
+    $("a2Cut").disabled = ph !== "knife";
+    $("a2Pen").disabled = !(ph === "idle" || ph === "grip");
+    $("a2Normal").disabled = ph === "done";
+  }
+
+  function tick2(dt){
+    S2.clock += dt;
+    var sec = dt / 1000;
+    if (S2.phase !== "grip") S2.freeMs += dt;
+    if (S2.clock >= S2.nextAt) spawn();
+    var n = S2.notifs.length;
+    if (S2.phase === "grip"){
+      var relaxed = [];
+      S2.fingers.forEach(function(f, i){
+        if (!f.cl && S2.clock - f.at >= RELAX){ f.cl = true; relaxed.push(FING[i][1]); }
+      });
+      if (relaxed.length) note2("Палец «" + relaxed.join("», «") + "» сжался сам: мышечная память.");
+      S2.pull += n ? 6 * n * sec : -9 * sec;
+    } else {
+      S2.pull += 5 * n * sec;
+    }
+    S2.pull = Math.max(0, Math.min(100, S2.pull));
+    if (S2.pull >= 100){
+      if (S2.phase === "grip"){ finish2("grip"); return; }
+      phoneReturns();
+    }
+    render2();
+  }
+
+  var last = performance.now();
+  setInterval(function(){
+    var now = performance.now(), dt = Math.min(now - last, 250);
+    last = now;
+    if (current !== "act2" || modalOpen || document.hidden || !S2 || !running()) return;
+    tick2(dt);
+  }, 100);
+
+  function updateClock(){
+    var d = new Date();
+    var t = ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
+    $("a2Time").textContent = t;
+    $("a2Clock").textContent = t;
+  }
+  updateClock();
+  setInterval(updateClock, 10000);
+
+  $("a2Start").addEventListener("click", function(){
+    if (S2.phase === "done") reset2();
+    start2();
+  });
+  $("a2Take").addEventListener("click", take);
+  $("a2Cut").addEventListener("click", cut);
+  $("a2Knife").addEventListener("click", knifeClick);
+  $("a2Pen").addEventListener("click", function(){ if (S2.phase === "idle" || S2.phase === "grip") finish2("pen"); });
+  $("a2Normal").addEventListener("click", function(){ if (S2.phase !== "done") finish2("normal"); });
+
+  /* ================= АКТ III ================= */
+  var W3 = {
+    "ТЕЛЕФОН":"Изделие является телефоном и находится в руке. Нож находится на столе. Расстояние между ними – одна рука.",
+    "ФОН":"Изделие стало фоном. Фон не звонит, но продолжает работать в фоне.",
+    "ТОН":"Изделие стало тоном. Комиссия просит сбавить тон.",
+    "ТЕЛО":"Изделие стало телом. Тело из рук не выпускается: оно и есть руки.",
+    "ЛЕН":"Изделие стало льном. Лён режется ножом. Ножа пока нет.",
+    "ЕЛЕ":"Изделие держится еле-еле. Это обнадёживает.",
+    "ОН":"Изделие стало местоимением. Комиссия не может установить, кто «он».",
+    "ЖОН":"Изделие стало Жоном. Жон не нож, хотя и рядом.",
+    "НОН":"Изделие стало «нон», что по-французски значит «нет». Комиссия «нон» не принимает.",
+    "ФЕН":"Изделие стало феном. Фен дует, но не режет. Шаг в сторону.",
+    "ЖЕЛЕ":"Изделие стало желе. Желе режется даже телефоном. Телефона, впрочем, уже нет.",
+    "ТЕЛЕ":"Изделие стало приставкой «теле-». Вещание продолжается без изделия."
+  };
+  var DEF3 = [
+    "Наименование «%» в реестре не найдено. Изделие продолжает звонить.",
+    "Операция проведена на весу. Изделие из рук не выпущено.",
+    "Изделие «%» удерживается в руке. Хват не ослаблен.",
+    "Комиссия не узнаёт изделие «%», но узнаёт хват."
+  ];
+
+  var S3 = {parts:[], stock:[], sel:-1, ops:0, done:false, k:0};
+
+  function originals(){
+    return [{ch:"Н", inv:1, orig:true}, {ch:"О", inv:2, orig:true}, {ch:"Ж", inv:3, orig:true}];
+  }
+
+  function reset3(){
+    S3.parts = "ТЕЛЕФОН".split("").map(function(ch, i){ return {ch:ch, inv:1001 + i, phone:true}; });
+    S3.sel = -1; S3.ops = 0; S3.done = false; S3.k = 0;
+    var sn, dis = false;
+    if (G.act1 === "ship"){
+      S3.stock = originals();
+      sn = "На складе – исходные детали Н, О, Ж (инв. 0001–0003), снятые в акте I.";
+    } else if (G.act1 === "assembled"){
+      S3.stock = [];
+      sn = "Склад пуст: в акте I из исходных деталей собран второй нож. Его можно разобрать.";
+      dis = true;
+    } else {
+      S3.stock = [{ch:"Н", inv:201, orig:false}, {ch:"О", inv:202, orig:false}, {ch:"Ж", inv:203, orig:false}];
+      sn = "Акт I не пройден, поэтому детали Н, О, Ж выданы по накладной (инв. 0201–0203). Исходными они не являются.";
+    }
+    $("a3StockNote").textContent = sn;
+    $("a3Disasm").classList.toggle("hidden", !dis);
+    $("a3Verdict").textContent = W3["ТЕЛЕФОН"];
+    $("a3Note").textContent = "";
+    render3(null);
+  }
+
+  function word3(){ return S3.parts.map(function(p){return p.ch;}).join(""); }
+
+  function render3(fresh){
+    var box = $("a3Plates");
+    box.innerHTML = "";
+    S3.parts.forEach(function(p, i){
+      var b = plateEl(p, p.inv === fresh, true);
+      if (i === S3.sel) b.classList.add("sel");
+      b.setAttribute("aria-pressed", i === S3.sel ? "true" : "false");
+      b.disabled = S3.done;
+      b.addEventListener("click", function(){ selPart(i); });
+      box.appendChild(b);
+    });
+
+    var sb = $("a3Stock");
+    sb.innerHTML = "";
+    S3.stock.forEach(function(p, j){
+      var b = plateEl(p, false, true);
+      b.disabled = S3.done;
+      b.setAttribute("aria-label", "Установить со склада деталь " + p.ch + ", инв. " + inv(p.inv));
+      b.addEventListener("click", function(){ putStock(j); });
+      sb.appendChild(b);
+    });
+    $("a3StockEmpty").classList.toggle("hidden", S3.stock.length > 0);
+
+    var w = word3();
+    $("a3Name").textContent = "Изделие в руке: " + (w || "—");
+    $("a3Ops").textContent = "Операций: " + S3.ops;
+
+    var hit = 0, T = "НОЖ";
+    for (var i = 0; i < T.length; i++) if (w[i] === T[i]) hit++;
+    var kn = Math.round(hit / 3 * 100);
+    if (w.length > 3) kn = Math.round(kn * 3 / w.length);
+    $("a3KnifeVal").textContent = kn + " %";
+    $("a3KnifeBar").style.width = kn + "%";
+
+    var phc = S3.parts.filter(function(p){return p.phone;}).length;
+    var pp = Math.round(phc / 7 * 100);
+    $("a3PhoneVal").textContent = pp + " %";
+    $("a3PhoneBar").style.width = pp + "%";
+    $("a3Orig").textContent = S3.parts.filter(function(p){return p.orig;}).length + " из 3";
+    $("a3Ring").textContent = phc >= 5 ? "да" : (phc >= 1 ? "да, тише" : "нет");
+
+    $("a3Remove").disabled = S3.done || S3.sel < 0;
+  }
+
+  function selPart(i){
+    if (S3.done) return;
+    S3.sel = S3.sel === i ? -1 : i;
+    $("a3Note").textContent = S3.sel < 0 ? "" : "Выбрана деталь " + S3.parts[i].ch + ". Снимите её или нажмите деталь на складе для замены.";
+    render3(null);
+  }
+
+  function removePart(){
+    if (S3.done || S3.sel < 0) return;
+    var p = S3.parts.splice(S3.sel, 1)[0];
+    S3.stock.push(p);
+    S3.sel = -1;
+    $("a3Note").textContent = "Деталь " + p.ch + " (инв. " + inv(p.inv) + ") снята на склад.";
+    after3(null);
+  }
+
+  function putStock(j){
+    if (S3.done) return;
+    if (S3.sel < 0){
+      $("a3Note").textContent = "Сначала выберите в изделии деталь, которую нужно заменить.";
+      return;
+    }
+    var np = S3.stock.splice(j, 1)[0];
+    var old = S3.parts[S3.sel];
+    S3.parts[S3.sel] = np;
+    S3.stock.push(old);
+    S3.sel = -1;
+    $("a3Note").textContent = "Деталь " + old.ch + " (инв. " + inv(old.inv) + ") заменена деталью " + np.ch + " (инв. " + inv(np.inv) + ").";
+    after3(np.inv);
+  }
+
+  function origin(p){ return p.orig ? "исходная" : (p.phone ? "из телефона" : "по накладной"); }
+
+  function after3(fresh){
+    S3.ops++;
+    var w = word3(), v;
+    if (w === "НОЖ"){
+      S3.done = true;
+      var same = S3.parts.every(function(p){return p.orig;});
+      v = same
+        ? "Изделие НОЖ собрано из исходных деталей 0001–0003. Телефон разобран на склад, из рук не выпускался. Комиссия подтверждает: это тот же нож."
+        : "Изделие НОЖ собрано. Состав: " + S3.parts.map(function(p){ return p.ch + " – " + origin(p); }).join(", ") + ". Комиссия признаёт изделие ножом и на всякий случай телефоном.";
+      $("a3Verdict").textContent = v;
+      render3(fresh);
+      $("a3Note").textContent = "Операций потребовалось: " + S3.ops + ".";
+      setTimeout(function(){ unlock(same ? "same" : "phonoknife"); }, 600);
+      return;
+    }
+    if (!w){
+      S3.done = true;
+      $("a3Verdict").textContent = "Изделие отсутствует. Выпускать из рук нечего.";
+      render3(fresh);
+      setTimeout(function(){ unlock("empty"); }, 600);
+      return;
+    }
+    if (W3[w]) v = W3[w];
+    else if (!S3.parts.some(function(p){return p.phone;})) v = "Изделие «" + w + "» больше не звонит. Ножом оно тоже не является.";
+    else v = DEF3[S3.k++ % DEF3.length].replace("%", w);
+    $("a3Verdict").textContent = v;
+    render3(fresh);
+  }
+
+  $("a3Remove").addEventListener("click", removePart);
+  $("a3Reset").addEventListener("click", reset3);
+  $("a3Disasm").addEventListener("click", function(){
+    G.act1 = "ship";
+    S3.stock = S3.stock.concat(originals());
+    $("a3Disasm").classList.add("hidden");
+    $("a3StockNote").textContent = "Изделие № 2 разобрано, детали 0001–0003 на складе. Тесей снова понимает, каким режет.";
+    render3(null);
+  });
+
+  /* ================= ЗАПУСК ================= */
   reset();
+  reset2();
+  reset3();
+  renderRegistry();
+  var saved = null;
+  try { saved = localStorage.getItem("theseus-knife-act"); } catch (e) {}
+  if (saved && $(saved) && saved !== "act1") showAct(saved);
 })();
 </script>
 </body>
