@@ -297,6 +297,25 @@ ol.log li b{display:block}
 .hand.left .finger.open{transform:translateX(-.9rem)}
 .hand.right .finger.open{transform:translateX(.9rem)}
 .finger.locked{border-color:var(--stamp);box-shadow:0 0 0 2px var(--stamp)}
+.finger .sub{display:block;font-size:.62rem;font-weight:400;margin-top:.15rem;opacity:.9}
+.finger.busy{border-style:dotted;border-color:var(--stamp)}
+.finger.nope{animation:nope .35s}
+@keyframes nope{
+  25%{translate:-4px 0}
+  50%{translate:4px 0}
+  75%{translate:-2px 0}
+}
+.a2hint{
+  min-height:1.6em;
+  margin:2rem 0 0;
+  text-align:center;
+  font-weight:700;
+  color:var(--stamp);
+}
+.modes{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin-top:1.25rem;font-size:.9rem}
+.modes button{padding:.35rem .8rem;font-size:.85rem;background:transparent;color:var(--ink)}
+.modes button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.modes small{color:var(--ink-soft);font-style:italic}
 
 .phone{
   position:relative;
@@ -469,7 +488,7 @@ footer{
 }
 @media (prefers-reduced-motion: reduce){
   .plate.just,.notif,.slice,.card{animation:none}
-  .phone.buzz{animation:none}
+  .phone.buzz,.finger.nope{animation:none}
   .bar i,.finger,.phone,.sausage,.plate{transition:none}
 }
 </style>
@@ -574,6 +593,13 @@ footer{
     <p class="lead">Нож лежит на столе. Рядом лежит «Краковская». Телефон находится в руке. Задача – взять нож и отрезать три ломтика.</p>
     <p class="basis">«Чтоб в руки взять нож, надо из рук выпустить телефон, но такой телефон из рук выпустить не реально.» <cite>AngelOfMors, 4PDA</cite></p>
 
+    <div class="modes" role="group" aria-label="Режим сложности">
+      <span>Режим:</span>
+      <button type="button" data-mode="normal">Обычный</button>
+      <button type="button" data-mode="ultra">Ultra</button>
+      <small id="a2ModeNote"></small>
+    </div>
+
     <section class="stage">
       <div class="stage-title">
         <h3 id="a2Name">Изделие в руке: ТЕЛЕФОН</h3>
@@ -597,6 +623,7 @@ footer{
         </div>
         <div class="hand right" id="handR"></div>
       </div>
+      <p class="a2hint" id="a2Hint" aria-live="polite"></p>
 
       <div class="table">
         <span class="table-label">Стол</span>
@@ -614,7 +641,7 @@ footer{
         <div class="field">
           <div class="k">Тяга экрана</div>
           <div class="v" id="a2PullVal">60 %</div>
-          <div class="bar pull" id="a2PullBarBox"><i id="a2PullBar" style="width:60%"></i><span class="mark" style="left:30%" title="Порог большого пальца"></span></div>
+          <div class="bar pull" id="a2PullBarBox"><i id="a2PullBar" style="width:60%"></i><span class="mark" id="a2Mark" style="left:50%" title="Порог большого пальца"></span></div>
         </div>
         <div class="field">
           <div class="k">Пальцев разжато</div>
@@ -650,9 +677,9 @@ footer{
       <ol>
         <li>Нажатие на палец разжимает его. Чтобы выпустить телефон, нужно разжать все пять.</li>
         <li>Каждое новое уведомление вибрацией сжимает один разжатый палец.</li>
-        <li>Разжатый палец через 4 секунды сжимается сам: мышечная память.</li>
+        <li>Разжатый палец через <span id="a2RuleRelax">6 секунд</span> сжимается сам: мышечная память.</li>
         <li>Непрочитанные уведомления повышают тягу экрана. Когда уведомлений нет, тяга падает.</li>
-        <li>Большой палец разжимается, только когда на экране нет уведомлений и тяга ниже 30 %. Он листает.</li>
+        <li>Большой палец разжимается, только когда на экране нет уведомлений и тяга ниже <span id="a2RuleThumb">50</span> % (метка на шкале тяги). Он листает. Подпись на пальце показывает, чем он занят.</li>
         <li>Уведомление смахивается крестиком. Нажатие на текст уведомления его открывает. Не открывайте.</li>
         <li>При тяге 100 % хватка становится окончательной.</li>
         <li>Выпущенный телефон лежит экраном вниз и продолжает получать уведомления. Если тяга дойдёт до 100 %, он вернётся в руку сам.</li>
@@ -1115,7 +1142,13 @@ footer{
 
   /* ================= АКТ II ================= */
   var FING = [["Большой","Большой"],["Указат.","Указательный"],["Средний","Средний"],["Безым.","Безымянный"],["Мизинец","Мизинец"]];
-  var RELAX = 4000, THUMB_MAX = 30, SLICES = 3;
+  var MODES = {
+    normal:{start:30, thumbMax:50, grow:3, decay:7, freeGrow:3, relax:6000, gap:[2200, 3600], first:2500, minSpeed:0.6, ramp:60000, back:45},
+    ultra:{start:60, thumbMax:30, grow:6, decay:9, freeGrow:5, relax:4000, gap:[1300, 2400], first:1600, minSpeed:0.55, ramp:45000, back:60}
+  };
+  var SLICES = 3, mode = "normal";
+  try { if (localStorage.getItem("theseus-knife-mode") === "ultra") mode = "ultra"; } catch (e) {}
+  function M(){ return MODES[mode]; }
 
   var NOTIFS = [
     ["4PDA","Вам ответили в теме «Samsung Galaxy S26 Ultra»"],
@@ -1160,6 +1193,12 @@ footer{
     b.type = "button";
     b.className = "finger" + (i === 0 ? " thumb" : "");
     b.textContent = f[0];
+    if (i === 0){
+      var sub = document.createElement("span");
+      sub.className = "sub";
+      sub.id = "a2ThumbSub";
+      b.appendChild(sub);
+    }
     b.addEventListener("click", function(){ fingerClick(i); });
     (i === 0 ? $("handL") : $("handR")).appendChild(b);
     fingerBtns.push(b);
@@ -1175,14 +1214,19 @@ footer{
     return a;
   }
 
-  function note2(t){ $("a2Note").textContent = t; }
+  /* Системные реплики (вибрация, мышечная память) не перебивают ответ на действие игрока 2 секунды */
+  function note2(t, sys){
+    if (sys && S2.clock < S2.noteHold) return;
+    if (!sys) S2.noteHold = S2.clock + 2000;
+    $("a2Note").textContent = t;
+  }
   function running(){ return S2.phase === "grip" || S2.phase === "free" || S2.phase === "knife"; }
   function openCount(){ return S2.fingers.filter(function(f){return !f.cl;}).length; }
 
   function reset2(){
     tries2++;
     S2 = {
-      phase:"idle", clock:0, nextAt:0, pull:60,
+      phase:"idle", clock:0, nextAt:0, pull:M().start, noteHold:0,
       fingers:FING.map(function(){return {cl:true, at:0};}),
       notifs:[{id:1, app:"4PDA", text:"Вам ответили в теме «Samsung Galaxy S26 Ultra»"}],
       nid:1, deck:shuffled(NOTIFS.length).filter(function(i){return i !== 0;}), di:0,
@@ -1198,7 +1242,7 @@ footer{
   function start2(){
     if (S2.phase !== "idle") return;
     S2.phase = "grip";
-    S2.nextAt = S2.clock + 1600;
+    S2.nextAt = S2.clock + M().first;
     note2("Попытка начата. Комиссия наблюдает.");
     render2();
   }
@@ -1225,11 +1269,12 @@ footer{
     S2.notifs.push({id:++S2.nid, app:t[0], text:t[1]});
     if (S2.phase === "grip"){
       var i = clenchRandom();
-      if (i !== null) note2("Вибрация. Палец «" + FING[i][1] + "» сжался рефлекторно.");
+      if (i !== null) note2("Вибрация. Палец «" + FING[i][1] + "» сжался рефлекторно.", true);
     }
     buzz();
-    var speed = Math.max(0.55, 1 - S2.clock / 45000);
-    S2.nextAt = S2.clock + (1300 + Math.random() * 1100) * speed * (S2.phase === "grip" ? 1 : 1.3);
+    var m = M();
+    var speed = Math.max(m.minSpeed, 1 - S2.clock / m.ramp);
+    S2.nextAt = S2.clock + (m.gap[0] + Math.random() * (m.gap[1] - m.gap[0])) * speed * (S2.phase === "grip" ? 1 : 1.3);
     renderNotifs();
   }
 
@@ -1259,8 +1304,17 @@ footer{
     var f = S2.fingers[i];
     if (!f.cl){ note2("Палец уже разжат. Повторно не разжимается."); return; }
     if (i === 0){
-      if (S2.notifs.length){ note2("Большой палец листает уведомления. Пока на экране есть непрочитанное, он занят."); return; }
-      if (S2.pull >= THUMB_MAX){ note2("Большой палец удерживается тягой экрана: " + Math.round(S2.pull) + " %. Нужно ниже 30 %."); return; }
+      var why = "";
+      if (S2.notifs.length) why = "Большой палец листает уведомления. Сначала смахните их крестиком.";
+      else if (S2.pull >= M().thumbMax) why = "Большой палец удерживается тягой экрана: " + Math.round(S2.pull) + " %. Подождите, пока упадёт ниже " + M().thumbMax + " %.";
+      if (why){
+        note2(why);
+        var tb = fingerBtns[0];
+        tb.classList.remove("nope");
+        void tb.offsetWidth;
+        tb.classList.add("nope");
+        return;
+      }
     }
     f.cl = false;
     f.at = S2.clock;
@@ -1271,16 +1325,16 @@ footer{
   function release(){
     S2.phase = "free";
     S2.freeMs = 0;
-    S2.nextAt = S2.clock + 1700;
+    S2.nextAt = S2.clock + M().gap[0];
     $("phone").classList.add("dropped");
     note2("Телефон выпущен из рук. Лёг экраном вниз. Рука свободна. Берите нож.");
   }
 
   function phoneReturns(){
     S2.phase = "grip";
-    S2.pull = 60;
+    S2.pull = M().back;
     S2.fingers.forEach(function(f){ f.cl = true; });
-    S2.nextAt = S2.clock + 1500;
+    S2.nextAt = S2.clock + M().first;
     $("phone").classList.remove("dropped");
     note2("Тяга экрана 100 %. Телефон вернулся в руку сам." + (S2.slices ? " Нож положен на стол: рука одна." : ""));
     renderNotifs();
@@ -1395,6 +1449,27 @@ footer{
     $("a2BackCount").textContent = n ? "вибрирует · " + n + " " + plural(n, "непрочитанное", "непрочитанных", "непрочитанных") : "лежит тихо";
     $("a2Try").textContent = "Попытка " + tries2;
 
+    var tmax = M().thumbMax, rightOpen = S2.fingers.slice(1).filter(function(f){return !f.cl;}).length;
+    var sub = "", busy = false, hint = "";
+    if (ph === "idle" || ph === "grip"){
+      if (n){ sub = "листает"; busy = true; }
+      else if (p >= tmax){ sub = "тяга " + p + " %"; busy = true; }
+      else if (S2.fingers[0].cl) sub = "можно";
+    }
+    $("a2ThumbSub").textContent = sub;
+    fingerBtns[0].classList.toggle("busy", busy);
+    if (ph === "idle") hint = "Нажмите любой палец или «Начать попытку».";
+    else if (ph === "grip"){
+      if (n) hint = "Большой палец занят: на экране " + n + " " + plural(n, "уведомление", "уведомления", "уведомлений") + ". Смахните крестиком.";
+      else if (p >= tmax) hint = "Экран чист. Ждите, пока тяга упадёт ниже " + tmax + " %.";
+      else if (rightOpen < 4) hint = "Большой палец свободен. Разожмите остальные: " + rightOpen + " из 4.";
+      else hint = "Жмите большой палец!";
+    }
+    else if (ph === "free") hint = "Берите нож, пока телефон не вернулся в руку.";
+    else if (ph === "knife") hint = "Режьте: ломтиков " + S2.slices + " из " + SLICES + ".";
+    $("a2Hint").textContent = hint;
+    $("a2Mark").style.left = tmax + "%";
+
     var name = "ТЕЛЕФОН";
     if (ph === "free") name = "—";
     if (ph === "knife") name = "НОЖ";
@@ -1440,12 +1515,12 @@ footer{
     if (S2.phase === "grip"){
       var relaxed = [];
       S2.fingers.forEach(function(f, i){
-        if (!f.cl && S2.clock - f.at >= RELAX){ f.cl = true; relaxed.push(FING[i][1]); }
+        if (!f.cl && S2.clock - f.at >= M().relax){ f.cl = true; relaxed.push(FING[i][1]); }
       });
-      if (relaxed.length) note2("Палец «" + relaxed.join("», «") + "» сжался сам: мышечная память.");
-      S2.pull += n ? 6 * n * sec : -9 * sec;
+      if (relaxed.length) note2("Палец «" + relaxed.join("», «") + "» сжался сам: мышечная память.", true);
+      S2.pull += n ? M().grow * n * sec : -M().decay * sec;
     } else {
-      S2.pull += 5 * n * sec;
+      S2.pull += M().freeGrow * n * sec;
     }
     S2.pull = Math.max(0, Math.min(100, S2.pull));
     if (S2.pull >= 100){
@@ -1481,6 +1556,34 @@ footer{
   $("a2Knife").addEventListener("click", knifeClick);
   $("a2Pen").addEventListener("click", function(){ if (S2.phase === "idle" || S2.phase === "grip") finish2("pen"); });
   $("a2Normal").addEventListener("click", function(){ if (S2.phase !== "done") finish2("normal"); });
+
+  var MODE_NOTES = {
+    normal:"Уведомления реже, пальцы терпеливее.",
+    ultra:"Для тех, кто держит телефон профессионально."
+  };
+  var MODE_BTNS = Array.prototype.slice.call(document.querySelectorAll("[data-mode]"));
+
+  function renderMode(){
+    MODE_BTNS.forEach(function(b){ b.setAttribute("aria-pressed", b.getAttribute("data-mode") === mode ? "true" : "false"); });
+    $("a2ModeNote").textContent = MODE_NOTES[mode];
+    var s = M().relax / 1000;
+    $("a2RuleRelax").textContent = s + " " + plural(s, "секунду", "секунды", "секунд");
+    $("a2RuleThumb").textContent = String(M().thumbMax);
+  }
+
+  MODE_BTNS.forEach(function(b){
+    b.addEventListener("click", function(){
+      var m = b.getAttribute("data-mode");
+      if (m === mode) return;
+      if (running()){ note2("Режим меняется между попытками."); return; }
+      mode = m;
+      try { localStorage.setItem("theseus-knife-mode", mode); } catch (e) {}
+      renderMode();
+      tries2--;
+      reset2();
+    });
+  });
+  renderMode();
 
   /* ================= АКТ III ================= */
   var W3 = {
